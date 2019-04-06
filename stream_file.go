@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"time"
 )
 
 type StreamFile struct {
@@ -39,7 +40,7 @@ var (
 // Write will write a row of cells to the current sheet. Every call to Write on the same sheet must contain the
 // same number of cells as the header provided when the sheet was created or an error will be returned. This function
 // will always trigger a flush on success. Currently the only supported data type is string data.
-func (sf *StreamFile) Write(cells []string) error {
+func (sf *StreamFile) Write(cells []*SFCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -51,7 +52,7 @@ func (sf *StreamFile) Write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) WriteAll(records [][]string) error {
+func (sf *StreamFile) WriteAll(records [][]*SFCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -65,7 +66,7 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) write(cells []string) error {
+func (sf *StreamFile) write(cells []*SFCell) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
@@ -87,7 +88,7 @@ func (sf *StreamFile) write(cells []string) error {
 		// s (Shared String): Cell containing a shared string.
 		// str (String): Cell containing a formula string.
 		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
-		cellType := "inlineStr"
+		cellType := string(cellData.Type)
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
 		if colIndex < len(sf.currentSheet.styleIds) && sf.currentSheet.styleIds[colIndex] != 0 {
@@ -99,7 +100,16 @@ func (sf *StreamFile) write(cells []string) error {
 		if err := sf.currentSheet.write(cellOpen); err != nil {
 			return err
 		}
-		if err := xml.EscapeText(sf.currentSheet.writer, []byte(cellData)); err != nil {
+
+		celldstr := ""
+		switch cellData.Type {
+		case SFDate:
+			celldstr = cellData.Value.(time.Time).UTC().Format("2006-01-02T15:04:05-0700")
+		default:
+			celldstr = cellData.Value.(string)
+		}
+
+		if err := xml.EscapeText(sf.currentSheet.writer, []byte(celldstr)); err != nil {
 			return err
 		}
 		if err := sf.currentSheet.write(cellClose); err != nil {

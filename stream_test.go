@@ -354,7 +354,11 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 			if i == 0 {
 				continue
 			}
-			err = streamFile.Write(row)
+			rcells := make([]*SFCell, len(row))
+			for k := range row {
+				rcells[k] = SFCellString(row[k])
+			}
+			err = streamFile.Write(rcells)
 			if err != nil {
 				return err
 			}
