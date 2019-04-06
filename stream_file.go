@@ -94,8 +94,18 @@ func (sf *StreamFile) write(cells []*SFCell) error {
 		if colIndex < len(sf.currentSheet.styleIds) && sf.currentSheet.styleIds[colIndex] != 0 {
 			cellOpen += ` s="` + strconv.Itoa(sf.currentSheet.styleIds[colIndex]) + `"`
 		}
-		cellOpen += `><is><t>`
-		cellClose := `</t></is></c>`
+		var cellClose string
+		switch cellData.Type {
+		case SFDate:
+			cellOpen += `><is><t>`
+			cellClose = `</t></is></c>`
+		case SFNumber:
+			cellOpen += `><v>`
+			cellClose = `</v></c>`
+		default:
+			cellOpen += `><is><t>`
+			cellClose = `</t></is></c>`
+		}
 
 		if err := sf.currentSheet.write(cellOpen); err != nil {
 			return err
