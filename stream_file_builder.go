@@ -53,6 +53,7 @@ var (
 	// This allows us to predict what the style id of styles that we add will be.
 	// TestXlsxStyleBehavior tests that this behavior continues to be what we expect.
 	initMaxStyleId = 1
+	// https://github.com/tealeg/xlsx/issues/365
 )
 
 func TempOverrideMaxStyleID(v int) {

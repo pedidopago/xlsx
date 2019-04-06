@@ -66,6 +66,8 @@ func (sf *StreamFile) WriteAll(records [][]*SFCell) error {
 	return sf.zipWriter.Flush()
 }
 
+// https://github.com/elimity-com/xlsx/commit/edc622ac23db2227fa0d21ae2af896135aa310f8
+
 func (sf *StreamFile) write(cells []*SFCell) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
